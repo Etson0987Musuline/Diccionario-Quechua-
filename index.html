@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diccionario Bidireccional Quechua</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        
+        .upload-section {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: #2ecc71;
+            background: linear-gradient(45deg, #e8f5e8, #d4edda);
+        }
+        
+        .upload-section.dragover {
+            border-color: #27ae60;
+            background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+            transform: scale(1.02);
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .upload-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .format-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #856404;
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .status-loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        #search-input {
+            flex-grow: 1;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #e1e8ed;
+            border-radius: 25px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        #search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);
+        }
+        
+        #search-button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        #search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        #results-container {
+            border-top: 3px solid #e1e8ed;
+            padding-top: 30px;
+            min-height: 100px;
+        }
+        
+        .result-entry {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 5px solid #27ae60;
+            transition: all 0.3s ease;
+        }
+        
+        .result-entry:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .result-entry .direction {
+            font-weight: bold;
+            color: #27ae60;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .result-entry .found-word {
+            font-style: italic;
+            font-size: 18px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .result-entry .context {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+        }
+        
+        .stats {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .demo-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .demo-button {
+            background: linear-gradient(45deg, #e74c3c, #f39c12);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(231, 76, 60, 0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Diccionario Quechua</h1>
+        <p class="subtitle">Búsqueda Bidireccional • Quechua ⇄ Español</p>
+        
+        <!-- Sección de carga de archivo -->
+        <div class="upload-section" id="upload-section">
+            <h3>📁 Cargar archivo de diccionario</h3>
+            <p>Arrastra tu archivo de texto aquí o haz clic para seleccionarlo</p>
+            
+            <input type="file" id="file-input" accept=".txt,.text" />
+            <label for="file-input" class="upload-button">
+                📄 Seleccionar archivo .txt
+            </label>
+            
+            <div class="format-info">
+                <strong>📋 Formato esperado:</strong><br>
+                • Una entrada por línea<br>
+                • Ejemplo: <code>hampatu (s). sapo, rana</code><br>
+                • O formato simple: <code>hampatu - sapo</code><br>
+                • Codificación: UTF-8
+            </div>
+            
+            <div class="demo-section">
+                <p>¿No tienes el archivo? Prueba el modo demostración:</p>
+                <button class="demo-button" id="demo-button">
+                    🎮 Cargar datos de ejemplo
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mensaje de estado -->
+        <div id="status-message" class="hidden"></div>
+        
+        <!-- Sección de búsqueda -->
+        <div class="search-container hidden" id="search-section">
+            <input type="text" id="search-input" placeholder="🔍 Buscar palabra (ej: 'hampatu' o 'sapo')" aria-label="Palabra a buscar">
+            <button id="search-button">Buscar</button>
+        </div>
+
+        <!-- Contenedor de resultados -->
+        <div id="results-container"></div>
+    </div>
+
+    <script>
+        // Variables globales
+        let entradas = [];
+        const uploadSection = document.getElementById('upload-section');
+        const statusMessage = document.getElementById('status-message');
+        const searchSection = document.getElementById('search-section');
+        const searchInput = document.getElementById('search-input');
+        const resultsContainer = document.getElementById('results-container');
+        const fileInput = document.getElementById('file-input');
+        const demoButton = document.getElementById('demo-button');
+
+        // Funciones de utilidad
+        function mostrarMensaje(mensaje, tipo = 'loading') {
+            statusMessage.className = `status-message status-${tipo}`;
+            statusMessage.innerHTML = mensaje;
+            statusMessage.classList.remove('hidden');
+        }
+
+        function ocultarMensaje() {
+            statusMessage.classList.add('hidden');
+        }
+
+        function limpiarPantalla() {
+            resultsContainer.innerHTML = "";
+        }
+
+        // Extraer entradas del texto del diccionario
+        function extraerEntradasDiccionario(texto) {
+            const entradasList = [];
+            const lineas = texto.split('\n');
+            
+            for (let linea of lineas) {
+                linea = linea.trim();
+                if (!linea || linea.length < 3) continue;
+                
+                // Ignorar líneas que parecen títulos o números de página
+                if (/^(página|page|\d+|\s*\d+\s*)$/i.test(linea)) continue;
+                
+                // Patrón principal: Palabra (categoría)= Traducción / Palabra (categoría). Traducción
+                const patronPrincipal = /^([^()=.-]+?)\s*\(([^)]+)\)[\s]*[.=]\s*(.+?)\.?$/i;
+                const match = linea.match(patronPrincipal);
+                
+                if (match) {
+                    let palabraQuechua = match[1].trim().replace(/^[¡!¿?]*/, '').trim();
+                    const categoria = match[2].trim();
+                    const traduccionEspanol = match[3].trim();
+                    
+                    const formatoQuechuaEspanol = `${palabraQuechua} (${categoria}) = ${traduccionEspanol}`;
+                    
+                    entradasList.push({
+                        palabraQuechua: palabraQuechua.toLowerCase(),
+                        categoria: categoria,
+                        traduccionEspanol: traduccionEspanol,
+                        formatoQE: formatoQuechuaEspanol,
+                        formatoEQ: `${traduccionEspanol} = ${palabraQuechua} (${categoria})`,
+                        lineaOriginal: linea
+                    });
+                    continue;
+                }
+                
+                // Patrón simple: Palabra - Traducción o Palabra. Traducción
+                const patronSimple = /^([^-=.]+?)[\s]*[-=.]+\s*(.+)$/;
+                const matchSimple = linea.match(patronSimple);
+                
+                if (matchSimple) {
+                    let palabra = matchSimple[1].trim().replace(/^[¡!¿?]*/, '').trim();
+                    const traduccion = matchSimple[2].trim().replace(/\.$/, '');
+                    
+                    if (palabra && traduccion) {
+                        entradasList.push({
+                            palabraQuechua: palabra.toLowerCase(),
+                            categoria: '',
+                            traduccionEspanol: traduccion,
+                            formatoQE: `${palabra} = ${traduccion}`,
+                            formatoEQ: `${traduccion} = ${palabra}`,
+                            lineaOriginal: linea
+                        });
+                    }
+                }
+            }
+            
+            return entradasList;
+        }
+
+        // Buscar palabra en el diccionario
+        function buscarPalabra(palabraBuscar) {
+            palabraBuscar = palabraBuscar.trim().toLowerCase();
+            if (!palabraBuscar) return [];
+            
+            const resultados = [];
+            
+            // Búsqueda exacta en quechua
+            for (const entrada of entradas) {
+                if (entrada.palabraQuechua === palabraBuscar) {
+                    resultados.push({
+                        encontrada: true,
+                        tipo: 'exacta',
+                        direccion: 'Quechua → Español',
+                        resultado: entrada.formatoQE,
+                        contexto: entrada.lineaOriginal
+                    });
+                }
+            }
+            
+            // Búsqueda exacta en español
+            for (const entrada of entradas) {
+                const palabrasEspanol = entrada.traduccionEspanol.toLowerCase().split(/[.,;!¡¿?\/\s]+/);
+                for (const palabraEsp of palabrasEspanol) {
+                    if (palabraEsp.trim() === palabraBuscar) {
+                        resultados.push({
+                            encontrada: true,
+                            tipo: 'exacta',
+                            direccion: 'Español → Quechua',
+                            resultado: entrada.formatoEQ,
+                            contexto: entrada.lineaOriginal
+                        });
+                    }
+                }
+            }
+            
+            // Si no hay coincidencias exactas, buscar parciales
+            if (resultados.length === 0) {
+                for (const entrada of entradas) {
+                    if (entrada.palabraQuechua.includes(palabraBuscar)) {
+                        resultados.push({
+                            encontrada: true,
+                            tipo: 'parcial',
+                            direccion: 'Quechua → Español (parcial)',
+                            resultado: entrada.formatoQE,
+                            contexto: entrada.lineaOriginal
+                        });
+                    }
+                }
+                
+                for (const entrada of entradas) {
+                    if (entrada.traduccionEspanol.toLowerCase().includes(palabraBuscar)) {
+                        resultados.push({
+                            encontrada: true,
+                            tipo: 'parcial',
+                            direccion: 'Español → Quechua (parcial)',
+                            resultado: entrada.formatoEQ,
+                            contexto: entrada.lineaOriginal
+                        });
+                    }
+                }
+            }
+            
+            return resultados.length > 0 ? resultados : [{encontrada: false}];
+        }
+
+        // Mostrar resultados de búsqueda
+        function formatearResultados(resultados) {
+            limpiarPantalla();
+            
+            if (!resultados || !resultados[0]?.encontrada) {
+                resultsContainer.innerHTML = `
+                    <div class="result-entry" style="border-left-color: #e74c3c;">
+                        <div class="direction" style="color: #e74c3c;">❌ No encontrado</div>
+                        <div class="found-word">Mana tarikuni - No se encontró la palabra</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let output = `<div class="stats">📊 ${resultados.length} resultado(s) encontrado(s)</div>`;
+            
+            for (const resultado of resultados) {
+                const contextHtml = resultado.tipo === 'parcial' && resultado.contexto ? 
+                    `<div class='context'>📄 Contexto: ${resultado.contexto}</div>` : '';
+                
+                output += `
+                    <div class='result-entry'>
+                        <div class='direction'>📖 ${resultado.direccion}</div>
+                        <div class='found-word'>✅ ${resultado.resultado}</div>
+                        ${contextHtml}
+                    </div>
+                `;
+            }
+            resultsContainer.innerHTML = output;
+        }
+
+        // Procesar archivo cargado
+        function procesarArchivo(file) {
+            if (!file) return;
+            
+            if (!file.name.toLowerCase().endsWith('.txt')) {
+                mostrarMensaje('❌ Por favor selecciona un archivo de texto (.txt)', 'error');
+                return;
+            }
+            
+            mostrarMensaje('<div class="loading-spinner"></div>Leyendo archivo...', 'loading');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const texto = e.target.result;
+                    
+                    mostrarMensaje('<div class="loading-spinner"></div>Procesando entradas del diccionario...', 'loading');
+                    
+                    entradas = extraerEntradasDiccionario(texto);
+                    
+                    if (entradas.length > 0) {
+                        mostrarMensaje(`✅ ¡Diccionario cargado exitosamente! ${entradas.length} entradas encontradas.`, 'success');
+                        activarBusqueda();
+                    } else {
+                        mostrarMensaje('⚠️ Archivo cargado pero no se encontraron entradas válidas. Revisa el formato.', 'error');
+                    }
+                    
+                } catch (error) {
+                    mostrarMensaje(`❌ Error al procesar el archivo: ${error.message}`, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                mostrarMensaje('❌ Error al leer el archivo', 'error');
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // Cargar datos de ejemplo
+        function cargarDatosEjemplo() {
+            mostrarMensaje('<div class="loading-spinner"></div>Cargando datos de ejemplo...', 'loading');
+            
+            const textoEjemplo = `
+hampatu (s). sapo, rana
+allqu (s). perro
+rumi (s). piedra
+yaku (s). agua
+inti (s). sol
+quilla (s). luna
+warmi (s). mujer
+qhari (s). hombre, varón
+wasi (s). casa
+mikuy (v). comer
+puñuy (v). dormir
+pukllay (v). jugar
+llamkay (v). trabajar
+yachay (v). aprender, saber
+munay (v). amar, querer
+rimay (v). hablar
+qaway (v). mirar
+uyariy (v). escuchar
+ayni (s). reciprocidad
+ayllu (s). familia, comunidad
+chakana (s). cruz andina
+mama (s). madre
+tayta (s). padre
+wawa (s). bebé, niño
+sumaq (adj). bonito, hermoso
+hatun (adj). grande
+uchuy (adj). pequeño
+kusay (adj). alegre
+llaki (adj). triste
+chaska (s). estrella
+wayra (s). viento
+`;
+            
+            setTimeout(() => {
+                entradas = extraerEntradasDiccionario(textoEjemplo);
+                mostrarMensaje(`✅ Modo demostración: ${entradas.length} entradas cargadas. ¡Prueba buscar!`, 'success');
+                activarBusqueda();
+                
+                // Mostrar ejemplos automáticamente
+                setTimeout(() => {
+                    resultsContainer.innerHTML = `
+                        <div class="stats">🎮 Modo demostración - Ejemplos disponibles</div>
+                        <div class="result-entry">
+                            <div class="direction">📖 Quechua → Español</div>
+                            <div class="found-word">✅ chakana (s) = cruz andina</div>
+                        </div>
+                        <div class="result-entry">
+                            <div class="direction">📖 Español → Quechua</div>
+                            <div class="found-word">✅ reciprocidad = ayni (s)</div>
+                        </div>
+                        <div class="result-entry" style="border-left-color: #f39c12;">
+                            <div class="direction" style="color: #f39c12;">💡 Sugerencias</div>
+                            <div class="found-word">Prueba: hampatu, sapo, inti, sol, chakana, ayni</div>
+                        </div>
+                    `;
+                }, 1000);
+            }, 500);
+        }
+
+        // Activar la búsqueda
+        function activarBusqueda() {
+            uploadSection.style.display = 'none';
+            searchSection.classList.remove('hidden');
+            searchInput.focus();
+        }
+
+        // Event listeners
+        function configurarEventos() {
+            // Carga de archivo
+            fileInput.addEventListener('change', (e) => {
+                procesarArchivo(e.target.files[0]);
+            });
+            
+            // Botón demo
+            demoButton.addEventListener('click', cargarDatosEjemplo);
+            
+            // Drag & Drop
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.classList.add('dragover');
+            });
+            
+            uploadSection.addEventListener('dragleave', () => {
+                uploadSection.classList.remove('dragover');
+            });
+            
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.classList.remove('dragover');
+                procesarArchivo(e.dataTransfer.files[0]);
+            });
+            
+            // Búsqueda
+            document.getElementById('search-button').addEventListener('click', () => {
+                const palabra = searchInput.value.trim();
+                if (palabra) {
+                    const resultados = buscarPalabra(palabra);
+                    formatearResultados(resultados);
+                } else {
+                    limpiarPantalla();
+                }
+            });
+
+            searchInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    document.getElementById('search-button').click();
+                }
+            });
+
+            searchInput.addEventListener('input', () => {
+                if (!searchInput.value.trim()) {
+                    limpiarPantalla();
+                }
+            });
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', configurarEventos);
+    </script>
+</body>
+</html>
